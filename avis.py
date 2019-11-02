@@ -1,10 +1,4 @@
-import pygame
-import random
-import sys
-import smtplib
-import webbrowser
-import os
-import time
+import pygame, random, sys, smtplib, webbrowser, os, time
 import speech_recognition as sr
 from pygame.locals import *
 from gtts import gTTS
@@ -12,15 +6,12 @@ from gtts import gTTS
 pygame.init() # initialising the pygame module
 clock = pygame.time.Clock()
 FPS = 60 # frames per second
-reminderArray = []
-todoArray = []
 WINDOWX,WINDOWY= 300,150 # these are the dimensions for the Avis window
-WINDOWBORDERWIDTHX,WINDOWBORDERWIDTHY= 7,0 # Dimensions for the border of the window border
-RESOLUTION =(2560,1600) # Resolution of the screen
-"""w,h=pygame.display.get_window_size()"""
-x = RESOLUTION[0]-WINDOWX-WINDOWBORDERWIDTHX # The width of the entire GUI
-y = WINDOWBORDERWIDTHY
-os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (x,y)
+infoObject = pygame.display.Info()
+RESOLUTION =(infoObject.current_w,infoObject.current_h) # Resolution of the screen
+startx = RESOLUTION[0]-WINDOWX # The width of the entire GUI
+starty = 0
+os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (startx,starty)
 DISPLAY = pygame.display.set_mode((WINDOWX,WINDOWY))
 pygame.display.set_caption("Avis")
 icon = pygame.image.load("logo.png")
@@ -31,11 +22,17 @@ GREY = (192,192,192)
 RED = (255,0,0)
 GREEN = (0,255,0)
 BLUE = (0,0,255)
+threshold = 0.5 # threshold for deciphering function
 with open("avisConfig.txt","r+") as avisConfig:
     username = avisConfig.readline()
     password = avisConfig.readline()
     nickname = avisConfig.readline()
-threshold = 0.5 # threshold for deciphering function
+
+class chatbox:
+    def __init__(self,text,position,colour):
+        self.text = text
+        self.position = position
+        self.colour = colour
 
 def textToSpeech(text): # converts text into speech
   print ("Avis said: %s " % text)
@@ -47,7 +44,7 @@ def textToSpeech(text): # converts text into speech
 def speechToText(): # converts speech to text
   r = sr.Recognizer()
   with sr.Microphone() as source:
-    r.pause_thresh = 1
+    r.pause_thresh = 2
     r.adjust_for_ambient_noise(source, duration = 1)
     audio = r.listen(source)
   try:
@@ -60,14 +57,11 @@ def speechToText(): # converts speech to text
     speechToText()
 def main(): # main program
     greetings = ("Hello!","Hey there!","What's up?","What can I do for you?")
-    textToSpeech((random.choice(greetings)+" "+nickname+"!")) # say a random greeting
-    request = speechToText()
-    command = decipher(request)
-def decipher(text): # finds meaning of users input
-    emailWords = ["email","send","to","saying",""]
-    todoWords = ["todo","add","this","need","to","do"]
-    reminderWords = ["remind","me","minutes","minute"]
-    wordDictionary = {"email":emailWords}
+    textToSpeech((random.choice(greetings)+" "+nickname)) # say a random greeting
+    command = speechToText()
+    function = decipher(command)
+    eval(function)
+def decipher(text): # attempts to find meaning of users input
     words = text.split(" ")
     x = 0
     y = 0
@@ -97,6 +91,7 @@ def email(): # sends an email to a contact in a contact file
                 found = True
                 emailTo = contact[1]
                 textToSpeech("Ok! You would like to send an email to %s" % emailTo)
+                break
     if found == False: # adds new contact
         textToSpeech("I don't know who %s is!" % name)
         email = input("What is their email? ")
@@ -105,23 +100,15 @@ def email(): # sends an email to a contact in a contact file
             contacts.write(contact)
             textToSpeech("Contact added!")
     elif found == True: # sends email
-        message = MIMEMultipart() # create draft email
         textToSpeech("What would you like to email them?")
         text = speechToText()
         textToSpeech("What would you like the subject line to be?")
         subject = speechToText()
-        message["From"] = emailFrom
-        message["To"] = MY_ADDRESS
+        message["From"] = username
+        message["To"] = emailTo
         message["Subject"] = subject
         message.attach(MIMEText(text, "plain"))
         s.send_message(message)
-def currency(): # converts one currency to another
-    currencyDictionary={"EUR":1.12,
-                "USD":1.32,
-                "JPY":148.22,
-                "RMB":8.68,
-               "NGN":473.15,
-                "HRK":8.39}
 while True:
     DISPLAY.fill(WHITE)
     for event in pygame.event.get():
