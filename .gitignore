@@ -2,6 +2,11 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python,macos,visualstudio,vim,venv
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,macos,visualstudio,vim,venv
 
+### Custom ###
+
+speech.mp3
+siri.mp3
+
 ### macOS ###
 # General
 .DS_Store
